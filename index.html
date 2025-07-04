@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Minimal Vocab Game</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			margin: 0;
+			display: flex;
+			flex-direction: column;
+			/* Arrange sections vertically */
+			align-items: center;
+			/* Center horizontally */
+			min-height: 100vh;
+			/* Ensure body takes full height */
+			background-color: #f4f4f4;
+			color: #333;
+		}
+
+		h1 {
+			text-align: center;
+			margin-top: 20px;
+			color: #2c3e50;
+		}
+
+		#settings {
+			min-height: 100vh;
+			/* Make settings section take full viewport height */
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			/* Center content vertically within settings */
+			align-items: center;
+			/* Center content horizontally within settings */
+			padding: 20px;
+			box-sizing: border-box;
+			background-color: #e0e7ff;
+			/* Light blue background for settings */
+		}
+
+		#game {
+			height: 100vh;
+			/* Make game section take full viewport height */
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			padding: 20px;
+			box-sizing: border-box;
+			background-color: #ffffff;
+			/* White background for game */
+			overflow: hidden;
+			/* Hide overflow if content is too large to scale */
+		}
+
+		.controls {
+			margin-top: 20px;
+			margin-bottom: 20px;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			justify-content: center;
+			align-items: center;
+			background-color: #f9f9f9;
+			padding: 15px;
+			border-radius: 8px;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+		}
+
+		.controls label {
+			margin-right: 5px;
+			font-weight: bold;
+		}
+
+		.controls input[type="number"] {
+			width: 60px;
+			padding: 8px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			text-align: center;
+		}
+
+		.controls button,
+		#playAudioBtn {
+			padding: 10px 20px;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 1em;
+			transition: background-color 0.3s ease;
+		}
+
+		.controls button:hover,
+		#playAudioBtn:hover {
+			background-color: #0056b3;
+		}
+
+		button:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+			background-color: #cccccc;
+		}
+
+		/* Styling for the file input group to match controls */
+		.file-input-group {
+			margin-top: 20px;
+			margin-bottom: 20px;
+			background-color: #f9f9f9;
+			padding: 15px;
+			border-radius: 8px;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 10px;
+		}
+
+		/* Style the file input itself to look more like a button */
+		#mediaFolderInput {
+			padding: 10px 20px;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 1em;
+			transition: background-color 0.3s ease;
+			/* Hide default file input text and button, rely on custom styling */
+			opacity: 0;
+			/* Hide the default input visually */
+			position: absolute;
+			/* Take it out of flow */
+			z-index: -1;
+			/* Send it behind other elements */
+			width: 0.1px;
+			/* Make it tiny */
+			height: 0.1px;
+			overflow: hidden;
+		}
+
+		/* Custom label for file input to act as the button */
+		.file-input-label {
+			display: inline-block;
+			padding: 10px 20px;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 1em;
+			transition: background-color 0.3s ease;
+		}
+
+		.file-input-label:hover {
+			background-color: #0056b3;
+		}
+
+
+		/* Basic grid styling */
+		#imageGrid {
+			display: grid;
+			gap: 10px;
+			/* Space between grid items */
+			max-width: 90%;
+			/* Limit width for better display */
+			width: 100%;
+			/* Ensure it's responsive */
+			margin: 20px auto;
+			/* Center the grid */
+			flex-grow: 1;
+			/* Allow grid to take available vertical space */
+			overflow-y: auto;
+			/* Add scroll if images still overflow, though scaling is preferred */
+		}
+
+		.image-option {
+			border: 2px solid #ccc;
+			padding: 5px;
+			text-align: center;
+			cursor: pointer;
+			transition: background-color 0.3s ease, border-color 0.3s ease;
+			border-radius: 8px;
+			overflow: hidden;
+			display: flex;
+			/* Make image option a flex container */
+			flex-direction: column;
+			justify-content: center;
+			/* Center image vertically */
+			align-items: center;
+			/* Center image horizontally */
+		}
+
+		.image-option:hover {
+			border-color: #007bff;
+		}
+
+		.image-option img {
+			max-width: 100%;
+			max-height: 100%;
+			/* Ensure image scales down vertically */
+			height: auto;
+			/* Maintain aspect ratio */
+			display: block;
+			margin: 0 auto;
+			border-radius: 4px;
+			object-fit: contain;
+			/* Ensure image fits within its bounds without cropping */
+		}
+
+		.message {
+			font-size: 1.1em;
+			color: #555;
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="settings">
+		<h2>Game Settings</h2>
+		<!-- Folder selection input group -->
+		<div class="file-input-group">
+			<label for="mediaFolderInput" class="file-input-label">Select Media Folder</label>
+			<input type="file" id="mediaFolderInput" webkitdirectory directory multiple>
+			<p class="message" id="statusMessage">No folder selected.</p>
+		</div>
+
+		<div class="controls">
+			<label for="numImages">Number of Images:</label>
+			<input type="number" id="numImages" value="6" min="2">
+
+			<label for="numColumns">Number of Columns:</label>
+			<input type="number" id="numColumns" value="3" min="1">
+
+			<button id="startGameBtn" disabled>Start Game</button>
+		</div>
+	</div>
+
+	<div id="game">
+		<h2>Vocab Game</h2>
+		<button id="playAudioBtn" disabled>Play Audio</button>
+		<div id="imageGrid">
+			<!-- Images will be inserted here -->
+		</div>
+	</div>
+
+	<script>
+		let availableVocab = []; // This will be populated dynamically
+		let currentCorrectItem = null;
+		const audioPlayer = new Audio();
+		let gameActive = false; // Controls if a correct answer has been found for the current round
+
+		const mediaFolderInput = document.getElementById('mediaFolderInput');
+		const playAudioBtn = document.getElementById('playAudioBtn');
+		const imageGrid = document.getElementById('imageGrid');
+		const statusMessage = document.getElementById('statusMessage');
+		const numImagesInput = document.getElementById('numImages');
+		const numColumnsInput = document.getElementById('numColumns');
+		const startGameBtn = document.getElementById('startGameBtn');
+		const settingsSection = document.getElementById('settings');
+		const gameSection = document.getElementById('game');
+
+
+		// Fisher-Yates (Knuth) shuffle algorithm
+		function shuffleArray(array) {
+			for (let i = array.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[array[i], array[j]] = [array[j], array[i]];
+			}
+			return array;
+		}
+
+		// Function to extract base filename (without extension)
+		function getBaseName(filename) {
+			const lastDotIndex = filename.lastIndexOf('.');
+			return lastDotIndex === -1 ? filename : filename.substring(0, lastDotIndex);
+		}
+
+		// Function to determine file type based on extension
+		function getFileType(filename) {
+			const ext = filename.split('.').pop().toLowerCase();
+			if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) {
+				return 'image';
+			}
+			if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
+				return 'audio';
+			}
+			return 'other';
+		}
+
+		// Handles the selection of the media folder
+		mediaFolderInput.addEventListener('change', (event) => {
+			const files = event.target.files;
+			const mediaMap = new Map(); // Map to store { baseName: { imageFile: File, audioFile: File } }
+
+			// Process all selected files
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				const baseName = getBaseName(file.name);
+				const fileType = getFileType(file.name);
+
+				if (fileType === 'image' || fileType === 'audio') {
+					if (!mediaMap.has(baseName)) {
+						mediaMap.set(baseName, {});
+					}
+					const entry = mediaMap.get(baseName);
+					if (fileType === 'image') {
+						entry.imageFile = file;
+					} else {
+						entry.audioFile = file;
+					}
+				}
+			}
+
+			// Populate availableVocab with matched image/audio pairs
+			availableVocab = [];
+			for (const [baseName, filesObj] of mediaMap.entries()) {
+				if (filesObj.imageFile && filesObj.audioFile) {
+					availableVocab.push({
+						word: baseName,
+						imageUrl: URL.createObjectURL(filesObj.imageFile),
+						audioUrl: URL.createObjectURL(filesObj.audioFile),
+						wrongAttempts: 0 // Initialize wrong attempts for each word
+					});
+				}
+			}
+
+			if (availableVocab.length > 0) {
+				statusMessage.textContent = `Found ${availableVocab.length} vocabulary pairs. Adjust settings and click "Start Game".`;
+				startGameBtn.disabled = false; // Enable the start game button
+				playAudioBtn.disabled = true; // Disable play audio until game starts
+				imageGrid.innerHTML = ''; // Clear any previous images
+			} else {
+				statusMessage.textContent = 'No matching image/audio pairs found in the selected folder. Make sure files like "word.png" and "word.mp3" exist.';
+				startGameBtn.disabled = true;
+				playAudioBtn.disabled = true;
+				imageGrid.innerHTML = '';
+			}
+		});
+
+		function startGame() {
+			if (availableVocab.length === 0) {
+				statusMessage.textContent = 'No vocabulary items loaded. Please select a folder first.';
+				playAudioBtn.disabled = true;
+				startGameBtn.disabled = true;
+				return;
+			}
+
+			gameActive = true; // Reset gameActive for a new round
+			imageGrid.innerHTML = ''; // Clear previous images
+
+			const numberOfImagesToShow = parseInt(numImagesInput.value, 10);
+			const numberOfColumns = parseInt(numColumnsInput.value, 10);
+
+			// Update grid columns dynamically
+			imageGrid.style.gridTemplateColumns = `repeat(${numberOfColumns}, 1fr)`;
+
+			// --- Weighted Random Selection Logic ---
+			const weightedVocabPool = [];
+			availableVocab.forEach(item => {
+				// Add each item to the pool (wrongAttempts + 1) times
+				// This makes words with more wrong attempts appear more frequently
+				for (let i = 0; i < (item.wrongAttempts + 1); i++) {
+					weightedVocabPool.push(item);
+				}
+			});
+
+			// 1. Select a random correct item from the weighted pool
+			const correctItemIndexInWeightedPool = Math.floor(Math.random() * weightedVocabPool.length);
+			currentCorrectItem = weightedVocabPool[correctItemIndexInWeightedPool];
+
+			// 2. Select (numberOfImagesToShow - 1) more random images (different from the correct one)
+			// Ensure these are unique and not the current correct item
+			const allItemsForDisplay = [...availableVocab]; // Use the original availableVocab for display options
+			const displayImages = [currentCorrectItem];
+
+			// Filter out the currentCorrectItem from the pool of other images
+			const potentialIncorrectItems = allItemsForDisplay.filter(item => item.word !== currentCorrectItem.word);
+			const shuffledIncorrect = shuffleArray(potentialIncorrectItems);
+
+			// Ensure we don't try to add more incorrect images than available, or more than requested
+			const numIncorrectToAdd = Math.min(numberOfImagesToShow - 1, shuffledIncorrect.length);
+			for (let i = 0; i < numIncorrectToAdd; i++) {
+				displayImages.push(shuffledIncorrect[i]);
+			}
+
+			// Shuffle the images for display
+			const shuffledDisplayImages = shuffleArray(displayImages);
+
+			// 3. Render images to the grid
+			shuffledDisplayImages.forEach(item => {
+				const imgDiv = document.createElement('div');
+				imgDiv.className = 'image-option';
+				imgDiv.dataset.word = item.word;
+
+				const img = document.createElement('img');
+				img.src = item.imageUrl;
+				img.alt = item.word;
+				imgDiv.appendChild(img);
+
+				imgDiv.addEventListener('click', handleImageClick);
+				imageGrid.appendChild(imgDiv);
+			});
+
+			// 4. Set audio source and play
+			audioPlayer.src = currentCorrectItem.audioUrl;
+			audioPlayer.play();
+			playAudioBtn.disabled = false; // Enable play audio button once game starts
+
+			// Scroll to the game section
+			gameSection.scrollIntoView({behavior: 'smooth'});
+		}
+
+		function handleImageClick(event) {
+			if (!gameActive) return; // If game is not active (i.e., correct answer already found), do nothing
+
+			const clickedImageDiv = event.currentTarget;
+			const clickedWord = clickedImageDiv.dataset.word;
+
+			// Reset background for all images to clear previous incorrect highlights
+			document.querySelectorAll('.image-option').forEach(imgDiv => {
+				imgDiv.style.backgroundColor = ''; // Reset to default (no background)
+			});
+
+			if (clickedWord === currentCorrectItem.word) {
+				clickedImageDiv.style.backgroundColor = 'lightgreen';
+				gameActive = false; // Mark game as inactive for this round (correct answer found)
+
+				// Optionally, you might want to reset wrongAttempts for this word if it's finally correct
+				// currentCorrectItem.wrongAttempts = 0; // Uncomment if you want to reset the count on correct guess
+
+				// Remove all event listeners to prevent further clicks during the delay
+				document.querySelectorAll('.image-option').forEach(imgDiv => {
+					imgDiv.removeEventListener('click', handleImageClick);
+				});
+
+				// Start a new game round after a 500ms delay
+				setTimeout(() => {
+					startGame();
+				}, 500);
+			} else {
+				clickedImageDiv.style.backgroundColor = 'lightcoral'; // Mark incorrect attempt with red
+				// Increment wrong attempts for the current correct item
+				currentCorrectItem.wrongAttempts++;
+				console.log(`Incorrect! "${currentCorrectItem.word}" now has ${currentCorrectItem.wrongAttempts} wrong attempts.`);
+				// gameActive remains true, and event listeners are NOT removed, allowing more clicks
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			playAudioBtn.addEventListener('click', () => {
+				audioPlayer.play();
+			});
+
+			startGameBtn.addEventListener('click', startGame);
+
+			// Set initial values for number inputs
+			numImagesInput.value = 6; // Default to 6 images
+			numImagesInput.min = 2; // Minimum 2 images (1 correct + at least 1 incorrect)
+			numColumnsInput.value = 3; // Default to 3 columns
+			numColumnsInput.min = 1; // Minimum 1 column
+		});
+	</script>
+</body>
+
+</html>
