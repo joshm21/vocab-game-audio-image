@@ -446,6 +446,17 @@
 				}, 500);
 			} else {
 				clickedImageDiv.style.backgroundColor = 'lightcoral'; // Mark incorrect attempt with red
+				const incorrectAudioUrl = availableVocab.find(item => item.word == clickedWord).audioUrl;
+				if (incorrectAudioUrl) {
+					audioPlayer.src = incorrectAudioUrl;
+					audioPlayer.play();
+					// After the incorrect audio plays, revert the audioPlayer.src back to the correct word's audio
+					// A common audio duration is around 1 second, so 1000ms is a safe delay.
+					setTimeout(() => {
+						audioPlayer.src = currentCorrectItem.audioUrl;
+					}, 1000); // Adjust delay as needed based on your audio file lengths
+
+				}
 				// Increment wrong attempts for the current correct item
 				currentCorrectItem.wrongAttempts++;
 				console.log(`Incorrect! "${currentCorrectItem.word}" now has ${currentCorrectItem.wrongAttempts} wrong attempts.`);
