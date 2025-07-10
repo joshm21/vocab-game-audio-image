@@ -432,7 +432,8 @@
 				clickedImageDiv.style.backgroundColor = 'lightgreen';
 				gameActive = false; // Mark game as inactive for this round (correct answer found)
 				// Optionally, you might want to reset wrongAttempts for this word if it's finally correct
-				currentCorrectItem.wrongAttempts = 0; // Uncomment if you want to reset the count on correct guess
+				// This doesn't work because of game mechanic change where user keeps selecting until right answer picked, which would immediately reset this
+				//currentCorrectItem.wrongAttempts = 0; // Uncomment if you want to reset the count on correct guess
 				// Remove all event listeners to prevent further clicks during the delay
 				document.querySelectorAll('.image-option').forEach(imgDiv => {
 					imgDiv.removeEventListener('click', handleImageClick);
