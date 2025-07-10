@@ -464,7 +464,10 @@
 				audioPlayer.play();
 			});
 
-			startGameBtn.addEventListener('click', startGame);
+			startGameBtn.addEventListener('click', () => {
+				settingsSection.style.display = 'none';
+				startGame();
+			});
 
 			// Set initial values for number inputs
 			numImagesInput.value = 6; // Default to 6 images
